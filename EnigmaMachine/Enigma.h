@@ -1,57 +1,46 @@
 #ifndef ENIGMA_H
 #define ENIGMA_H
 
-#include <fstream>
 #include <vector>
+#include <string>
+#include <map>
 
 #include "Rotor.h"
 
 class Component;
 
-class Enigma{
+class Enigma
+{
 public:
-  // Within this constructor, check all input files are valid by calling
-  // each "checkXXXConfig" method.
-  // Initialise all the components after all the check is done, so that, if
-  // exception is thrown while checking config, it throws an error to main.cpp
-  // before a new heap is created, thus avoiding memory leak even if
-  //  constructor fails in the middle of construction.
-  Enigma(int argc, char** argv);
-  ~Enigma();
+    void setRotors(const std::vector<Rotor::RotorNumber> &rotors);
+    void setRotorsPosition(const std::vector<size_t> &positions);
+    void addPlugConnection(const std::string &from, const std::string &to);
+    void clearPlugboard();
 
-  void encryptMessage(char& letter);
+    std::string encrypt(const std::string &letter);
+    void encryptMessage(char &letter);
 
 private:
-  // These 4 checkConfig methods check each input file by extracting input
-  // and check if each input is valid (and throws exception error
-  // as defined in the spec).
-  // They also assign each valid integer to corresponding vectors.
-  void checkPlugboardConfig(const char* path, std::vector<int>& contacts);
-  void checkReflectorConfig(const char* path, std::vector<int>& contacts);
-  void checkRotorConfig(const char* path, std::vector<int>& contacts);
-  void checkRotorPositionConfig(const char* path);
+    size_t getConnectionsMap(size_t input, const std::map<size_t, size_t> &connections) const;
+    size_t getReflectorMap(size_t input) const;
 
-  // This is a helper method for checking if inputs are valid for plugboard
-  // The reason this is in a separate method is that the numbers in plugboard
-  // have to be read off in pairs (as defined in the spec). Thus, unlike other
-  // checkConfig methods, I call istream twice in every while loop iteration.
-  bool isPlugboardInputValid(const char* path, fstream& in_stream, int& index_num);
-
-  // Check if num is within the range of 0-25
-  bool isNumberRangeCorrect(int num);
-
-  // Check if num is already appeared in contacts.
-  // If yes, return the index of the previous contact. Otherwise return -1
-  int checkAppearedBefore(std::vector<int> contacts, int num, int position);
-
-  std::vector<Rotor> mRotors;
-  std::vector<int> mRotorPositions;
-  // Even though I could easily get the number of rotors from rotors_,
-  // I store this as an attribute, because I use it frequently
-  // (e.g if statement, for loop etc).
-  int mRotorsNumber = 0;
-  Component *mPlugboard = nullptr;
-  Component *mReflecor = nullptr;
+    std::vector<Rotor> mRotors;
+    std::map<size_t, size_t> mPlugConnections;
+    const std::map<size_t, size_t> mReflectoConnections = {
+        {0, 4},
+        {1, 9},
+        {2, 12},
+        {3, 25},
+        {5, 11},
+        {6, 24},
+        {7, 23},
+        {8, 21},
+        {10, 22},
+        {13, 17},
+        {14, 16},
+        {15, 20},
+        {18, 19},
+    };
 };
 
 #endif
