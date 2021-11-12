@@ -1,13 +1,12 @@
 #include "Enigma.h"
+
+#include <iostream>
+#include <fstream>
+
 #include "Component.h"
 #include "Rotor.h"
 #include "alphabet.h"
 #include "errors.h"
-#include <iostream>
-#include <fstream>
-#include <vector>
-
-using namespace std;
 
 Enigma::Enigma(int argc, char** argv){
   vector<int> plugboard_contacts;
@@ -24,30 +23,26 @@ Enigma::Enigma(int argc, char** argv){
   }
   // 3 argc means no rotor is provided
   if(argc == 3){
-    num_of_rotors_ = 0;
+    mRotorsNumber = 0;
   }
   else{
-    num_of_rotors_ = argc-4;
+    mRotorsNumber = argc-4;
   }
   checkRotorPositionConfig(argv[argc-1]);
 
   // All the checking is done at this point, so instantiate each component
 
-  plugboard_ = new Component(argv[1]);
-  reflector_ = new Component(argv[2]);
-  for(int i = 0; i < num_of_rotors_; i++){
-    Rotor rotor(argv[3+i], rotor_positions_[i]);
-    rotors_.push_back(rotor);
+  mPlugboard = new Component(argv[1]);
+  mReflecor = new Component(argv[2]);
+  for(int i = 0; i < mRotorsNumber; i++){
+    Rotor rotor(argv[3+i], mRotorPositions[i]);
+    mRotors.push_back(rotor);
   }
 }
 
 Enigma::~Enigma(){
-    if(plugboard_){
-        delete plugboard_;
-    }
-    if(reflector_){
-        delete reflector_;
-    }
+    delete mPlugboard;
+    delete mReflecor;
 }
 
 bool Enigma::isPlugboardInputValid(const char* path, fstream& in_stream, \
@@ -240,12 +235,12 @@ void Enigma::checkRotorPositionConfig(const char* path){
       throw(INVALID_INDEX);
     }
     counter++;
-    rotor_positions_.push_back(num);
+    mRotorPositions.push_back(num);
   }
 
-  int diff = counter - num_of_rotors_;
+  int diff = counter - mRotorsNumber;
   if(diff < 0){
-    cerr << "No starting position for rotor " << num_of_rotors_ + diff \
+    cerr << "No starting position for rotor " << mRotorsNumber + diff \
     << " in rotor position file: " << path << endl;
     in_stream.close();
     throw(NO_ROTOR_STARTING_POSITION);
@@ -271,35 +266,35 @@ int Enigma::checkAppearedBefore(vector<int> contacts, int num, int position){
 
 void Enigma::encryptMessage(char& letter){
   int current_index = letter - 'A';
-  current_index = plugboard_->map(current_index);
+  current_index = mPlugboard->map(current_index);
 
-  if(num_of_rotors_ > 0){
-    rotors_[num_of_rotors_-1].rotate();
+  if(mRotorsNumber > 0){
+    mRotors[mRotorsNumber-1].rotate();
   }
 
-  if(num_of_rotors_ > 0){
-    for(int i = num_of_rotors_ ; i > 0; i--){
+  if(mRotorsNumber > 0){
+    for(int i = mRotorsNumber ; i > 0; i--){
       // TODO Needs explanation here
-      current_index = rotors_[i-1].shiftDown(current_index);
-      current_index = rotors_[i-1].mapForward(current_index);
-      current_index = rotors_[i-1].shiftUp(current_index);
-      if(rotors_[i-1].isCurrentPositionInNotch() && \
-         rotors_[i-1].getPreviousPosition() != \
-         rotors_[i-1].getCurrentPosition()){
+      current_index = mRotors[i-1].shiftDown(current_index);
+      current_index = mRotors[i-1].mapForward(current_index);
+      current_index = mRotors[i-1].shiftUp(current_index);
+      if(mRotors[i-1].isCurrentPositionInNotch() && \
+         mRotors[i-1].getPreviousPosition() != \
+         mRotors[i-1].getCurrentPosition()){
         if(i-1 > 0){
-          rotors_[i-2].rotate();
+          mRotors[i-2].rotate();
         }
       }
     }
   }
-  current_index = reflector_->map(current_index);
-  if(num_of_rotors_ > 0){
-    for(int i = 0; i < num_of_rotors_; i++){
-      current_index = rotors_[i].shiftDown(current_index);
-      current_index = rotors_[i].mapBackward(current_index);
-      current_index = rotors_[i].shiftUp(current_index);
+  current_index = mReflecor->map(current_index);
+  if(mRotorsNumber > 0){
+    for(int i = 0; i < mRotorsNumber; i++){
+      current_index = mRotors[i].shiftDown(current_index);
+      current_index = mRotors[i].mapBackward(current_index);
+      current_index = mRotors[i].shiftUp(current_index);
     }
   }
-  current_index = plugboard_->map(current_index);
+  current_index = mPlugboard->map(current_index);
   letter = current_index + 'A';
 }
