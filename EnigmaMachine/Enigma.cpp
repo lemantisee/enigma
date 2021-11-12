@@ -48,7 +48,6 @@ std::string Enigma::encrypt(const std::string &letter)
 
     size_t current_index = size_t(letter.front() - 'A');
     current_index = getConnectionsMap(current_index, mPlugConnections);
-    //  current_index = mPlugboard->map(current_index);
 
     mRotors.back().rotate();
 
